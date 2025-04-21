@@ -1,4 +1,4 @@
-const axios = require("axios");
+import axios from "axios";
 
 const WEBHOOK_URL =
   "https://logically-trusting-rhino.ngrok-free.app/webhook-test/73477c4d-860a-46a6-a847-9a56b843912f";
@@ -36,4 +36,4 @@ const bookCall = async function (args) {
   }
 };
 
-module.exports = bookCall;
+export default bookCall;
