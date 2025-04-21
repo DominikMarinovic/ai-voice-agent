@@ -1,7 +1,6 @@
 import WebSocket from "ws";
 import Twilio from "twilio";
 import SYSTEM_MESSAGE from "./system-prompt.js";
-const tools = require("./function-manifest.js");
 import bookCall from "./bookCall.js";
 
 export function registerOutboundRoutes(fastify) {
