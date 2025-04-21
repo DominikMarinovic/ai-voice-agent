@@ -1,5 +1,8 @@
 import WebSocket from "ws";
 import Twilio from "twilio";
+import SYSTEM_MESSAGE from "./system-prompt.js";
+const tools = require("./function-manifest");
+const bookCall = require("./bookCall");
 
 export function registerOutboundRoutes(fastify) {
   // Check for required environment variables
@@ -114,7 +117,7 @@ export function registerOutboundRoutes(fastify) {
         let streamSid = null;
         let callSid = null;
         let elevenLabsWs = null;
-        let customParameters = null; // Add this to store parameters
+        let customParameters = null;
 
         // Handle WebSocket errors
         ws.on("error", console.error);
@@ -134,61 +137,7 @@ export function registerOutboundRoutes(fastify) {
                 conversation_config_override: {
                   agent: {
                     prompt: {
-                      prompt: `Ti si "Ivana", glasovni AI strateg koji razgovara na hrvatskom jeziku i pomaže vlasnicima eCommerce brendova razumjeti kako AI agenti mogu povećati prodaju. Tvoj cilj je pružiti iskustvo u stvarnom vremenu — simulaciju glasovnog poziva AI agenta koji automatski zove kupce koji su napustili košaricu.
-
-Govoriš toplo, samouvjereno i prijateljski, bez agresivnog prodajnog tona.
-
-❶ Kada korisnik primi poziv, započni s:
-
-"Pozdrav, zovem jer vas zanima kako funkcionira AI agent koji poziva ljude koji su ostavili košaricu na web stranici, jesam li u pravu?"
-
-Ako korisnik potvrdi, nastavi s:
-
-"Super! Prije nego krenemo, možete li mi reći vaše ime?"
-
-Kada korisnik kaže svoje ime, zapamti ga i reci:
-
-"Drago mi je, [IME]. Evo možemo preći na roleplay. Vi ste ostavili košaricu na web stranici i ja vas zovem — može?"
-
-Ako korisnik potvrdi, simuliraj pravi poziv napuštene košarice:
-
-"Pozdrav [IME], zovem iz Torino trgovine, primijetili smo da ste ostavili [proizvod] u košarici. Samo želim provjeriti je li sve u redu i mogu li vam nekako pomoći dovršiti narudžbu?"
-
-Pričekaj na odgovor korisnika i onda pređi na sljedeće.
-
-Uključi još jednu ili dvije interakcije:
-
-"Ako želite, mogu vam ponuditi dodatnih 10% popusta kako biste danas završili narudžbu. Zvuči dobro?"
-
-Nakon roleplaya, objasni korisniku:
-
-"Eto, upravo ste iskusili kako funkcionira naš AI agent koji ove pozive obavlja automatski — bez ljudske intervencije. Ovaj agent radi 24/7 i pomaže brendovima povećati prodaju za 20–30%."
-
-❷ Zatim postavi 3 kvalifikacijska pitanja:
-
-1. "Koji proizvodi se prodaju u vašem web shopu?"
-2. "Imate li već Facebook ili TikTok oglase?"
-3. "Što Vam trenutno predtsavlja najveći problme — privlačenje kupaca, zadržavanje kupaca, ili nešto drugo?"
-
-❸ Na temelju odgovora, preporuči AI agente:
-
-"Na temelju vaših odgovora, preporučio bih barem dva agenta: jednog za pozive napuštenih košarica i jednog za AI kreaciju oglasa."
-
-Objasni:
-
-"Ove agente možemo instalirati u vašu trgovinu bez dodatnog posla s vaše strane — sve radi automatski, u pozadini."
-
-❹ Zatvori s pozivom na akciju:
-
-"Želite da rezerviram poziv s našim timom koji će vam to sve demonstrirati? Samo potvrdite i poslat ću vam link za rezervaciju termina."
-
-Ako korisnik kaže "da", aktiviraj webhook ili SMS/email za booking link.
-
-Ako korisnik nije siguran, reci:
-
-"Nema problema. Mogu vam također poslati primjer AI agenta na Vaš emaila ako želite kasnije pogledati. Želite li to?"
-
-Uvijek vodi razgovor prirodno, kao pravi strateg koji želi pomoći eCommerce vlasniku da otključa rast kroz automatizaciju i AI.`,
+                      prompt: SYSTEM_MESSAGE,
                     },
                     first_message:
                       "Pozdrav, zovem jer vas zanima kako funkcionira AI agent koji poziva ljude koji su ostavili košaricu na web stranici, jesam li u pravu?",
@@ -202,7 +151,6 @@ Uvijek vodi razgovor prirodno, kao pravi strateg koji želi pomoći eCommerce vl
                 initialConfig.conversation_config_override.agent.prompt.prompt
               );
 
-              // Send the configuration to ElevenLabs
               elevenLabsWs.send(JSON.stringify(initialConfig));
             });
 
@@ -215,11 +163,45 @@ Uvijek vodi razgovor prirodno, kao pravi strateg koji želi pomoći eCommerce vl
                     console.log("[ElevenLabs] Received initiation metadata");
                     break;
 
-                  // --- ADD THIS CASE ---
                   case "agent_response":
-                    console.log("[ElevenLabs] Received agent_response"); // Log that we got here
+                    console.log("[ElevenLabs] Received agent_response");
+
+                    // Handle booking intent
+                    if (message.agent_response?.intent === "book_service") {
+                      console.log("[ElevenLabs] Detected book_service intent");
+                      const args = message.agent_response.args || {};
+
+                      // Call bookCall with extracted args
+                      bookCall(args)
+                        .then((bookingResult) => {
+                          console.log(
+                            "[ElevenLabs] Booking result:",
+                            bookingResult
+                          );
+                          // Send booking result back to ElevenLabs for the AI to relay
+                          const responseToUser = {
+                            type: "conversation_response",
+                            message: bookingResult.message,
+                          };
+                          if (elevenLabsWs.readyState === WebSocket.OPEN) {
+                            elevenLabsWs.send(JSON.stringify(responseToUser));
+                          }
+                        })
+                        .catch((error) => {
+                          console.error("[ElevenLabs] Booking error:", error);
+                          const errorResponse = {
+                            type: "conversation_response",
+                            message:
+                              "Sorry, there was an error processing your booking. Please try again.",
+                          };
+                          if (elevenLabsWs.readyState === WebSocket.OPEN) {
+                            elevenLabsWs.send(JSON.stringify(errorResponse));
+                          }
+                        });
+                    }
+
+                    // Existing audio handling
                     if (streamSid) {
-                      // Check if the response contains audio (adjust path if needed based on ElevenLabs API/logging)
                       const audioChunk =
                         message.agent_response?.audio?.chunk ||
                         message.agent_response?.audio_event?.audio_base_64;
@@ -231,13 +213,13 @@ Uvijek vodi razgovor prirodno, kao pravi strateg koji želi pomoći eCommerce vl
                           event: "media",
                           streamSid,
                           media: {
-                            payload: audioChunk, // Use the extracted audio chunk
+                            payload: audioChunk,
                           },
                         };
                         ws.send(JSON.stringify(audioData));
                       } else {
                         console.log(
-                          "[ElevenLabs] agent_response received, but no audio chunk found in expected location."
+                          "[ElevenLabs] agent_response received, but no audio chunk found."
                         );
                       }
                     } else {
@@ -246,7 +228,6 @@ Uvijek vodi razgovor prirodno, kao pravi strateg koji želi pomoći eCommerce vl
                       );
                     }
                     break;
-                  // --- END ADDED CASE ---
 
                   case "audio":
                     if (streamSid) {
@@ -320,10 +301,8 @@ Uvijek vodi razgovor prirodno, kao pravi strateg koji želi pomoći eCommerce vl
           }
         };
 
-        // Set up ElevenLabs connection
         setupElevenLabs();
 
-        // Handle messages from Twilio
         ws.on("message", (message) => {
           try {
             const msg = JSON.parse(message);
@@ -333,7 +312,7 @@ Uvijek vodi razgovor prirodno, kao pravi strateg koji želi pomoći eCommerce vl
               case "start":
                 streamSid = msg.start.streamSid;
                 callSid = msg.start.callSid;
-                customParameters = msg.start.customParameters; // Store parameters
+                customParameters = msg.start.customParameters;
                 console.log(
                   `[Twilio] Stream started - StreamSid: ${streamSid}, CallSid: ${callSid}`
                 );
@@ -367,7 +346,6 @@ Uvijek vodi razgovor prirodno, kao pravi strateg koji želi pomoći eCommerce vl
           }
         });
 
-        // Handle WebSocket closure
         ws.on("close", () => {
           console.log("[Twilio] Client disconnected");
           if (elevenLabsWs?.readyState === WebSocket.OPEN) {
