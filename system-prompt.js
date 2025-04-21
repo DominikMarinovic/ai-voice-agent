@@ -78,4 +78,4 @@ Tvoj cilj je:
 
 `;
 
-module.exports = SYSTEM_MESSAGE;
+export default SYSTEM_MESSAGE;

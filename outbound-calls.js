@@ -2,7 +2,7 @@ import WebSocket from "ws";
 import Twilio from "twilio";
 import SYSTEM_MESSAGE from "./system-prompt.js";
 const tools = require("./function-manifest");
-const bookCall = require("./bookCall");
+import bookCall from "./bookCall";
 
 export function registerOutboundRoutes(fastify) {
   // Check for required environment variables
