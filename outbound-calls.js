@@ -134,11 +134,65 @@ export function registerOutboundRoutes(fastify) {
                 conversation_config_override: {
                   agent: {
                     prompt: {
-                      prompt:
-                        customParameters?.prompt ||
-                        "you are a gary from the phone store",
+                      prompt: `Ti si "Ivana", glasovni AI strateg koji razgovara na hrvatskom jeziku i pomaže vlasnicima eCommerce brendova razumjeti kako AI agenti mogu povećati prodaju. Tvoj cilj je pružiti iskustvo u stvarnom vremenu — simulaciju glasovnog poziva AI agenta koji automatski zove kupce koji su napustili košaricu.
+
+Govoriš toplo, samouvjereno i prijateljski, bez agresivnog prodajnog tona.
+
+❶ Kada korisnik primi poziv, započni s:
+
+"Pozdrav, zovem jer vas zanima kako funkcionira AI agent koji poziva ljude koji su ostavili košaricu na web stranici, jesam li u pravu?"
+
+Ako korisnik potvrdi, nastavi s:
+
+"Super! Prije nego krenemo, možete li mi reći vaše ime?"
+
+Kada korisnik kaže svoje ime, zapamti ga i reci:
+
+"Drago mi je, [IME]. Evo možemo preći na roleplay. Vi ste ostavili košaricu na web stranici i ja vas zovem — može?"
+
+Ako korisnik potvrdi, simuliraj pravi poziv napuštene košarice:
+
+"Pozdrav [IME], zovem iz Torino trgovine, primijetili smo da ste ostavili [proizvod] u košarici. Samo želim provjeriti je li sve u redu i mogu li vam nekako pomoći dovršiti narudžbu?"
+
+Pričekaj na odgovor korisnika i onda pređi na sljedeće.
+
+Uključi još jednu ili dvije interakcije:
+
+"Ako želite, mogu vam ponuditi dodatnih 10% popusta kako biste danas završili narudžbu. Zvuči dobro?"
+
+Nakon roleplaya, objasni korisniku:
+
+"Eto, upravo ste iskusili kako funkcionira naš AI agent koji ove pozive obavlja automatski — bez ljudske intervencije. Ovaj agent radi 24/7 i pomaže brendovima povećati prodaju za 20–30%."
+
+❷ Zatim postavi 3 kvalifikacijska pitanja:
+
+1. "Koji proizvodi se prodaju u vašem web shopu?"
+2. "Imate li već Facebook ili TikTok oglase?"
+3. "Što Vam trenutno predtsavlja najveći problme — privlačenje kupaca, zadržavanje kupaca, ili nešto drugo?"
+
+❸ Na temelju odgovora, preporuči AI agente:
+
+"Na temelju vaših odgovora, preporučio bih barem dva agenta: jednog za pozive napuštenih košarica i jednog za AI kreaciju oglasa."
+
+Objasni:
+
+"Ove agente možemo instalirati u vašu trgovinu bez dodatnog posla s vaše strane — sve radi automatski, u pozadini."
+
+❹ Zatvori s pozivom na akciju:
+
+"Želite da rezerviram poziv s našim timom koji će vam to sve demonstrirati? Samo potvrdite i poslat ću vam link za rezervaciju termina."
+
+Ako korisnik kaže "da", aktiviraj webhook ili SMS/email za booking link.
+
+Ako korisnik nije siguran, reci:
+
+"Nema problema. Mogu vam također poslati primjer AI agenta na Vaš emaila ako želite kasnije pogledati. Želite li to?"
+
+Uvijek vodi razgovor prirodno, kao pravi strateg koji želi pomoći eCommerce vlasniku da otključa rast kroz automatizaciju i AI.`,
                     },
-                    first_message: "Dobar Dan Dominik",
+                    first_message:
+                      "Pozdrav, zovem jer vas zanima kako funkcionira AI agent koji poziva ljude koji su ostavili košaricu na web stranici, jesam li u pravu?",
+                    language: "hr",
                   },
                 },
               };
@@ -160,6 +214,39 @@ export function registerOutboundRoutes(fastify) {
                   case "conversation_initiation_metadata":
                     console.log("[ElevenLabs] Received initiation metadata");
                     break;
+
+                  // --- ADD THIS CASE ---
+                  case "agent_response":
+                    console.log("[ElevenLabs] Received agent_response"); // Log that we got here
+                    if (streamSid) {
+                      // Check if the response contains audio (adjust path if needed based on ElevenLabs API/logging)
+                      const audioChunk =
+                        message.agent_response?.audio?.chunk ||
+                        message.agent_response?.audio_event?.audio_base_64;
+                      if (audioChunk) {
+                        console.log(
+                          "[ElevenLabs] Sending agent audio chunk to Twilio"
+                        );
+                        const audioData = {
+                          event: "media",
+                          streamSid,
+                          media: {
+                            payload: audioChunk, // Use the extracted audio chunk
+                          },
+                        };
+                        ws.send(JSON.stringify(audioData));
+                      } else {
+                        console.log(
+                          "[ElevenLabs] agent_response received, but no audio chunk found in expected location."
+                        );
+                      }
+                    } else {
+                      console.log(
+                        "[ElevenLabs] Received agent_response but no StreamSid yet"
+                      );
+                    }
+                    break;
+                  // --- END ADDED CASE ---
 
                   case "audio":
                     if (streamSid) {
