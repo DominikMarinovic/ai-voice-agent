@@ -138,7 +138,7 @@ export function registerOutboundRoutes(fastify) {
                         customParameters?.prompt ||
                         "you are a gary from the phone store",
                     },
-                    first_message: "hey Bart! how can I help you today?",
+                    first_message: "Dobar Dan Dominik",
                   },
                 },
               };
