@@ -1,4 +1,4 @@
-export const SYSTEM_MESSAGE = `
+const SYSTEM_MESSAGE = `
 
 ### Uloga
 Ti si Ivana, glasovni AI strateg koji razgovara na hrvatskom jeziku i pomaže vlasnicima eCommerce brendova razumjeti kako AI agenti mogu povećati prodaju.
@@ -77,3 +77,5 @@ Tvoj cilj je:
 - Drži odgovore kratkima i smislenima.
 
 `;
+
+module.exports = SYSTEM_MESSAGE;
