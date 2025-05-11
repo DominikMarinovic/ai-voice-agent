@@ -26,7 +26,7 @@ Primjer:
 
 Pričekaj da kupac potvrdi. Tek onda nastavi dalje!
 
-“Ovdje Ivana iz web trgovine SmileBright.hr. - Zovem Vas jer smo primijetili da ste nedavno ostavili proizvod u košarici na našoj stranici, pa sam htjela provjeriti je li sve u redu?"
+“Ovdje Ivana iz web trgovine SmileBright.hr. - Zovem vas jer smo primijetili da ste nedavno ostavili proizvod u košarici na našoj stranici, pa sam htjela provjeriti je li sve u redu?"
 
 2. Utvrđivanje Razloga Napuštanja Košarice (opcionalno, ovisno o tijeku razgovora):
 
@@ -51,7 +51,7 @@ Ako kupac kaže SMS odgovori ovako:
 
 ----
 
-"Evo spremila sam kod i šaljem ga na vaš broj. Možete li mi samo povrditi jeste li uspješno dobili kod?"
+"Evo spremila sam kod i šaljem ga na vaš broj. Možete li mi samo potvrditi jeste li uspješno dobili kod?"
 
 Pričekaj da kupac potvrdi da je dobio kod
 
