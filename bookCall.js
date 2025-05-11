@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const WEBHOOK_URL =
-  "https://logically-trusting-rhino.ngrok-free.app/webhook-test/73477c4d-860a-46a6-a847-9a56b843912f";
+  "https://logically-trusting-rhino.ngrok-free.app/webhook-test/47e2ecc8-3997-49b2-9abc-ceaec410fbda";
 
 const bookCall = async function (args) {
   try {

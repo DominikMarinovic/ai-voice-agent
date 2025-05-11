@@ -5,7 +5,7 @@ const tools = [
     type: "function",
     function: {
       name: "bookCall",
-      say: "Provjerit ću dostupne termine i poslat ću vam link za rezervaciju.",
+      say: "Provjerit ću dostupne termine.",
       description: "Book an AI strategy call for the eCommerce customer.",
       parameters: {
         type: "object",

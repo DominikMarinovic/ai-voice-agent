@@ -138,8 +138,7 @@ export function registerOutboundRoutes(fastify) {
                     prompt: {
                       prompt: SYSTEM_MESSAGE,
                     },
-                    first_message:
-                      "Pozdrav, zovem jer vas zanima kako funkcionira AI agent koji poziva ljude koji su ostavili košaricu na web stranici, jesam li u pravu?",
+                    first_message: "",
                     language: "hr",
                   },
                 },
